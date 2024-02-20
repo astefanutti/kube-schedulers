@@ -36,3 +36,8 @@ echo "Deploying KWOK"
 kubectl apply -f config/kwok/kwok.yaml
 kubectl wait --for condition=Established --all CustomResourceDefinition
 kubectl apply -f config/kwok/stage-fast.yaml
+
+# Deploy Prometheus
+kubectl apply -f config/prometheus/crds
+kubectl wait --for condition=Established --all CustomResourceDefinition
+kubectl apply -k config/prometheus
