@@ -25,8 +25,14 @@ containerdConfigPatches:
     endpoint = ["http://192.168.0.1:5001"]
 EOF
 
-# Install the NGINX Ingress controller
-echo "Deploying Ingress controller into KinD cluster"
+# Deploy the NGINX Ingress controller
+echo "Deploying Ingress controller"
 curl https://raw.githubusercontent.com/kubernetes/ingress-nginx/"${INGRESS_NGINX_VERSION}"/deploy/static/provider/kind/deploy.yaml | sed "s/--publish-status-address=localhost/--report-node-internal-ip-address\\n        - --status-update-interval=10/g" | kubectl apply -f -
 kubectl annotate ingressclass nginx "ingressclass.kubernetes.io/is-default-class=true"
 kubectl -n ingress-nginx wait --timeout=300s --for=condition=Available deployments --all
+
+# Deploy KWOK
+echo "Deploying KWOK"
+kubectl apply -f config/kwok/kwok.yaml
+kubectl wait --for condition=Established --all CustomResourceDefinition
+kubectl apply -f config/kwok/stage-fast.yaml
