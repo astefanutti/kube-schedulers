@@ -41,3 +41,6 @@ kubectl apply -f config/kwok/stage-fast.yaml
 kubectl apply -f config/prometheus/crds
 kubectl wait --for condition=Established --all CustomResourceDefinition
 kubectl apply -k config/prometheus
+
+# Deploy kube-state-metrics
+kubectl apply -k config/kube-state-metrics
