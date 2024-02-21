@@ -43,7 +43,7 @@ EOF
 
 # Deploy the NGINX Ingress controller
 echo "Deploying Ingress controller"
-curl https://raw.githubusercontent.com/kubernetes/ingress-nginx/"${INGRESS_NGINX_VERSION}"/deploy/static/provider/kind/deploy.yaml | sed "s/--publish-status-address=localhost/--report-node-internal-ip-address\\n        - --status-update-interval=10/g" | kubectl apply -f -
+curl -s https://raw.githubusercontent.com/kubernetes/ingress-nginx/"${INGRESS_NGINX_VERSION}"/deploy/static/provider/kind/deploy.yaml | sed "s/--publish-status-address=localhost/--report-node-internal-ip-address\\n        - --status-update-interval=10/g" | kubectl apply -f -
 kubectl annotate ingressclass nginx "ingressclass.kubernetes.io/is-default-class=true"
 kubectl -n ingress-nginx wait --timeout=300s --for=condition=Available deployments --all
 
