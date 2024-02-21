@@ -6,6 +6,22 @@ echo "Creating KinD cluster"
 cat <<EOF | kind create cluster --name kwok --config=-
 kind: Cluster
 apiVersion: kind.x-k8s.io/v1alpha4
+kubeadmConfigPatches:
+- |-
+  kind: ClusterConfiguration
+  controllerManager:
+    extraArgs:
+      bind-address: 0.0.0.0
+  etcd:
+    local:
+      extraArgs:
+        listen-metrics-urls: http://0.0.0.0:2381
+  scheduler:
+    extraArgs:
+      bind-address: 0.0.0.0
+- |-
+  kind: KubeProxyConfiguration
+  metricsBindAddress: 0.0.0.0
 nodes:
   - role: control-plane
     image: kindest/node:v1.29.2@sha256:51a1434a5397193442f0be2a297b488b6c919ce8a3931be0ce822606ea5ca245
