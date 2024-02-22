@@ -63,3 +63,6 @@ kubectl apply -k config/kube-state-metrics
 
 # Deploy kube-scheduler monitor
 kubectl apply -f config/kube-system
+
+# Deploy Grafana
+kubectl apply -k config/grafana
