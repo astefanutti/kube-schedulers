@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: kube-scheduler
+  namespace: kube-system
+  labels:
+    component: kube-scheduler
+spec:
+  clusterIP: None
+  ports:
+  - name: metrics
+    port: 10259
+    targetPort: 10259
+  selector:
+    component: kube-scheduler

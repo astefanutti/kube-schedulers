@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: kube-scheduler
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      component: kube-scheduler
+  endpoints:
+    - path: /metrics
+      port: metrics
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true

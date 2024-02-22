@@ -60,3 +60,6 @@ kubectl apply -k config/prometheus
 
 # Deploy kube-state-metrics
 kubectl apply -k config/kube-state-metrics
+
+# Deploy kube-scheduler monitor
+kubectl apply -f config/kube-system
