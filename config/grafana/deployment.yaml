@@ -61,6 +61,9 @@ spec:
             - mountPath: /grafana-dashboard-definitions/0/apiserver
               name: grafana-dashboard-apiserver
               readOnly: false
+            - mountPath: /grafana-dashboard-definitions/0/scheduler
+              name: grafana-dashboard-scheduler
+              readOnly: false
             - mountPath: /grafana-dashboard-definitions/0/k8s-resources-cluster
               name: grafana-dashboard-k8s-resources-cluster
               readOnly: false
@@ -69,6 +72,9 @@ spec:
               readOnly: false
             - mountPath: /grafana-dashboard-definitions/0/k8s-resources-node
               name: grafana-dashboard-k8s-resources-node
+              readOnly: false
+            - mountPath: /grafana-dashboard-definitions/0/k8s-resources-workload
+              name: grafana-dashboard-k8s-resources-workload
               readOnly: false
             - mountPath: /etc/grafana
               name: grafana-config
@@ -96,6 +102,9 @@ spec:
             name: grafana-dashboard-apiserver
           name: grafana-dashboard-apiserver
         - configMap:
+            name: grafana-dashboard-scheduler
+          name: grafana-dashboard-scheduler
+        - configMap:
             name: grafana-dashboard-k8s-resources-cluster
           name: grafana-dashboard-k8s-resources-cluster
         - configMap:
@@ -107,9 +116,6 @@ spec:
         - configMap:
             name: grafana-dashboard-k8s-resources-workload
           name: grafana-dashboard-k8s-resources-workload
-        - configMap:
-            name: grafana-dashboard-k8s-resources-workloads-namespace
-          name: grafana-dashboard-k8s-resources-workloads-namespace
         - name: grafana-config
           secret:
             secretName: grafana-config
