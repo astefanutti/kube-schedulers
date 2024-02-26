@@ -58,6 +58,9 @@ spec:
             - mountPath: /tmp
               name: tmp-plugins
               readOnly: false
+            - mountPath: /grafana-dashboard-definitions/0/scheduling
+              name: grafana-dashboard-scheduling
+              readOnly: false
             - mountPath: /grafana-dashboard-definitions/0/apiserver
               name: grafana-dashboard-apiserver
               readOnly: false
@@ -98,6 +101,9 @@ spec:
         - emptyDir:
             medium: Memory
           name: tmp-plugins
+        - configMap:
+            name: grafana-dashboard-scheduling
+          name: grafana-dashboard-scheduling
         - configMap:
             name: grafana-dashboard-apiserver
           name: grafana-dashboard-apiserver

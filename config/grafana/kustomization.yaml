@@ -8,6 +8,7 @@ resources:
 - service_account.yaml
 - dashboard_datasources.yaml
 - dashboard_definitions.yaml
+- dashboard_scheduling.yaml
 - dashboard_sources.yaml
 - config_secret.yaml
 - deployment.yaml
