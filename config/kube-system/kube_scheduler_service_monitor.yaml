@@ -4,9 +4,6 @@ metadata:
   name: kube-scheduler
   namespace: kube-system
 spec:
-  selector:
-    matchLabels:
-      component: kube-scheduler
   endpoints:
     - path: /metrics
       port: metrics
@@ -14,3 +11,7 @@ spec:
       bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
       tlsConfig:
         insecureSkipVerify: true
+  jobLabel: component
+  selector:
+    matchLabels:
+      component: kube-scheduler

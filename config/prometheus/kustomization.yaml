@@ -10,5 +10,6 @@ resources:
 - cluster_role.yaml
 - cluster_role_binding.yaml
 - prometheus.yaml
+- prometheus_rule.yaml
 - service.yaml
 - ingress.yaml
