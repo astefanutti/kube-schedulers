@@ -14,5 +14,5 @@ spec:
     requests:
       memory: 400Mi
   enableAdminAPI: true
-  externalUrl: http://172.18.0.3/prometheus
+  externalUrl: /prometheus/
   routePrefix: /
