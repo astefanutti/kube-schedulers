@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -euo pipefail
 
 : "${INGRESS_NGINX_VERSION:=controller-v1.9.6}"
