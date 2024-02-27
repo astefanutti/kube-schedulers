@@ -9,9 +9,8 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	appsv1ac "k8s.io/client-go/applyconfigurations/apps/v1"
+	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
-	metav1ac "k8s.io/client-go/applyconfigurations/meta/v1"
 )
 
 const kwokNode = "kwok.x-k8s.io/node"
@@ -116,16 +115,17 @@ func TestKubeScheduler(t *testing.T) {
 	ns := test.NewTestNamespace()
 
 	for j := 0; j < 100; j++ {
-		name := fmt.Sprintf("deployment-%03d", j)
-		deployment := appsv1ac.Deployment(name, ns.Name).
-			WithSpec(appsv1ac.DeploymentSpec().
-				WithReplicas(10).
-				WithProgressDeadlineSeconds(60).
-				WithSelector(metav1ac.LabelSelector().
-					WithMatchLabels(map[string]string{"app": name})).
+		name := fmt.Sprintf("job-%03d", j)
+
+		batch := batchv1ac.Job(name, ns.Name).
+			WithSpec(batchv1ac.JobSpec().
+				WithCompletions(10).
+				WithParallelism(10).
+				WithBackoffLimit(0).
+				WithActiveDeadlineSeconds(120).
 				WithTemplate(corev1ac.PodTemplateSpec().
-					WithLabels(map[string]string{"app": name}).
 					WithSpec(corev1ac.PodSpec().
+						WithRestartPolicy(corev1.RestartPolicyNever).
 						WithAffinity(corev1ac.Affinity().
 							WithNodeAffinity(corev1ac.NodeAffinity().
 								WithRequiredDuringSchedulingIgnoredDuringExecution(corev1ac.NodeSelector().
@@ -152,7 +152,7 @@ func TestKubeScheduler(t *testing.T) {
 									corev1.ResourceMemory: resource.MustParse("1Gi"),
 								}))))))
 
-		_, err := test.Client().Core().AppsV1().Deployments(ns.Name).Apply(test.Ctx(), deployment, ApplyOptions)
+		_, err := test.Client().Core().BatchV1().Jobs(ns.Name).Apply(test.Ctx(), batch, ApplyOptions)
 		test.Expect(err).NotTo(HaveOccurred())
 	}
 
