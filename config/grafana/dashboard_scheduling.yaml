@@ -749,6 +749,7 @@ data:
                 }
               },
               "mappings": [],
+              "min": 0,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -858,7 +859,42 @@ data:
               },
               "unitScale": true
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Failed"
+                },
+                "properties": [
+                  {
+                    "id": "custom.axisColorMode",
+                    "value": "text"
+                  },
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "semi-dark-red",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Succeeded"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "semi-dark-green",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -866,7 +902,7 @@ data:
             "x": 12,
             "y": 24
           },
-          "id": 9,
+          "id": 14,
           "options": {
             "legend": {
               "calcs": [],
@@ -884,17 +920,31 @@ data:
               "datasource": "$datasource",
               "disableTextWrap": false,
               "editorMode": "builder",
-              "expr": "sum by(plugin) (scheduler_unschedulable_pods)",
+              "expr": "sum(kube_job_status_failed)",
               "fullMetaSearch": false,
               "includeNullMetadata": true,
               "instant": false,
-              "legendFormat": "__auto",
+              "legendFormat": "Failed",
               "range": true,
               "refId": "A",
               "useBackend": false
+            },
+            {
+              "datasource": "$datasource",
+              "disableTextWrap": false,
+              "editorMode": "builder",
+              "expr": "sum(kube_job_status_succeeded)",
+              "fullMetaSearch": false,
+              "hide": false,
+              "includeNullMetadata": true,
+              "instant": false,
+              "legendFormat": "Succeeded",
+              "range": true,
+              "refId": "B",
+              "useBackend": false
             }
           ],
-          "title": "Unschedulable Pods (by plugins)",
+          "title": "Batch Jobs Status",
           "type": "timeseries"
         },
         {
@@ -1031,6 +1081,7 @@ data:
                 }
               },
               "mappings": [],
+              "min": 0,
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
@@ -1054,7 +1105,7 @@ data:
             "x": 12,
             "y": 32
           },
-          "id": 3,
+          "id": 9,
           "options": {
             "legend": {
               "calcs": [],
@@ -1072,8 +1123,7 @@ data:
               "datasource": "$datasource",
               "disableTextWrap": false,
               "editorMode": "builder",
-              "exemplar": false,
-              "expr": "sum by(status) (kube_deployment_status_condition{condition=\"Progressing\"})",
+              "expr": "sum by(plugin) (scheduler_unschedulable_pods)",
               "fullMetaSearch": false,
               "includeNullMetadata": true,
               "instant": false,
@@ -1083,7 +1133,7 @@ data:
               "useBackend": false
             }
           ],
-          "title": "Deployment Progressing Conditions",
+          "title": "Unschedulable Pods (by plugins)",
           "type": "timeseries"
         },
         {
@@ -1178,6 +1228,101 @@ data:
             }
           ],
           "title": "Scheduler Go Routines",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisBorderShow": true,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unitScale": true
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 40
+          },
+          "id": 3,
+          "options": {
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": "$datasource",
+              "disableTextWrap": false,
+              "editorMode": "builder",
+              "exemplar": false,
+              "expr": "sum by(status) (kube_deployment_status_condition{condition=\"Progressing\"})",
+              "fullMetaSearch": false,
+              "includeNullMetadata": true,
+              "instant": false,
+              "legendFormat": "__auto",
+              "range": true,
+              "refId": "A",
+              "useBackend": false
+            }
+          ],
+          "title": "Deployments Progression Status",
           "type": "timeseries"
         }
       ],
