@@ -328,8 +328,39 @@ data:
           "fieldConfig": {
             "defaults": {
               "color": {
-                "fixedColor": "semi-dark-blue",
                 "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": true,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 50,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
               },
               "fieldMinMax": false,
               "mappings": [],
@@ -339,10 +370,6 @@ data:
                   {
                     "color": "green",
                     "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
                   }
                 ]
               },
@@ -352,16 +379,34 @@ data:
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "memory"
+                  "options": "Limit"
                 },
                 "properties": [
                   {
-                    "id": "unitScale",
-                    "value": true
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "semi-dark-yellow",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Requested"
+                },
+                "properties": [
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "Limit"
                   },
                   {
-                    "id": "unit",
-                    "value": "bytes"
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "semi-dark-orange",
+                      "mode": "fixed"
+                    }
                   }
                 ]
               }
@@ -369,34 +414,28 @@ data:
           },
           "gridPos": {
             "h": 8,
-            "w": 2,
+            "w": 3,
             "x": 16,
             "y": 0
           },
           "id": 16,
           "options": {
-            "colorMode": "value",
-            "graphMode": "area",
-            "justifyMode": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
             },
-            "showPercentChange": false,
-            "text": {},
-            "textMode": "auto",
-            "wideLayout": true
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
           },
           "pluginVersion": "10.3.3",
           "targets": [
             {
               "datasource": "$datasource",
-              "editorMode": "code",
-              "expr": "sum(kube_pod_status_phase{phase=\"Running\"} * on (pod) group_left(uid) kube_pod_container_resource_requests{resource=\"cpu\",node=~\"kwok-node-.*\"})",
+              "expr": "sum(kube_pod_resource_request{resource=\"cpu\",exported_pod=~\"job-.*\"} or vector(0))",
               "hide": false,
               "instant": false,
               "legendFormat": "Requested",
@@ -405,7 +444,6 @@ data:
             },
             {
               "datasource": "$datasource",
-              "editorMode": "code",
               "expr": "sum(kube_node_status_allocatable{node=~\"kwok-node-.*\",resource=\"cpu\"})",
               "instant": false,
               "legendFormat": "Limit",
@@ -414,7 +452,7 @@ data:
             }
           ],
           "title": "CPU",
-          "type": "stat"
+          "type": "timeseries"
         },
         {
           "datasource": "$datasource",
@@ -423,6 +461,38 @@ data:
               "color": {
                 "fixedColor": "semi-dark-purple",
                 "mode": "fixed"
+              },
+              "custom": {
+                "axisBorderShow": true,
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 50,
+                "gradientMode": "opacity",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "insertNulls": false,
+                "lineInterpolation": "smooth",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
               },
               "fieldMinMax": false,
               "mappings": [],
@@ -446,16 +516,33 @@ data:
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "memory"
+                  "options": "Limit"
                 },
                 "properties": [
                   {
-                    "id": "unitScale",
-                    "value": true
+                    "id": "color",
+                    "value": {
+                      "mode": "palette-classic"
+                    }
+                  }
+                ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Requested"
+                },
+                "properties": [
+                  {
+                    "id": "custom.fillBelowTo",
+                    "value": "Limit"
                   },
                   {
-                    "id": "unit",
-                    "value": "bytes"
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "semi-dark-orange",
+                      "mode": "fixed"
+                    }
                   }
                 ]
               }
@@ -463,33 +550,28 @@ data:
           },
           "gridPos": {
             "h": 8,
-            "w": 2,
-            "x": 18,
+            "w": 3,
+            "x": 19,
             "y": 0
           },
           "id": 17,
           "options": {
-            "colorMode": "value",
-            "graphMode": "area",
-            "justifyMode": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
+            "legend": {
+              "calcs": [],
+              "displayMode": "list",
+              "placement": "bottom",
+              "showLegend": true
             },
-            "showPercentChange": false,
-            "text": {},
-            "textMode": "auto",
-            "wideLayout": true
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
           },
           "pluginVersion": "10.3.3",
           "targets": [
             {
               "datasource": "$datasource",
-              "expr": "sum(kube_pod_status_phase{phase=\"Running\"} * on (pod) group_left(uid) kube_pod_container_resource_requests{resource=\"memory\",node=~\"kwok-node-.*\"})",
+              "expr": "sum(kube_pod_resource_request{resource=\"memory\",exported_pod=~\"job-.*\"} or vector(0))",
               "hide": false,
               "instant": false,
               "legendFormat": "Requested",
@@ -506,107 +588,14 @@ data:
             }
           ],
           "title": "Memory",
-          "type": "stat"
+          "type": "timeseries"
         },
         {
           "datasource": "$datasource",
           "fieldConfig": {
             "defaults": {
               "color": {
-                "fixedColor": "#32d994",
-                "mode": "fixed"
-              },
-              "fieldMinMax": false,
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              },
-              "unit": "none",
-              "unitScale": true
-            },
-            "overrides": [
-              {
-                "matcher": {
-                  "id": "byName",
-                  "options": "memory"
-                },
-                "properties": [
-                  {
-                    "id": "unitScale",
-                    "value": true
-                  },
-                  {
-                    "id": "unit",
-                    "value": "bytes"
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 2,
-            "x": 20,
-            "y": 0
-          },
-          "id": 18,
-          "options": {
-            "colorMode": "value",
-            "graphMode": "area",
-            "justifyMode": "auto",
-            "orientation": "horizontal",
-            "reduceOptions": {
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": "",
-              "values": false
-            },
-            "showPercentChange": false,
-            "text": {},
-            "textMode": "auto",
-            "wideLayout": true
-          },
-          "pluginVersion": "10.3.3",
-          "targets": [
-            {
-              "datasource": "$datasource",
-              "editorMode": "code",
-              "expr": "sum(kube_pod_status_phase{phase=\"Running\"} * on (pod) group_left(uid) kube_pod_info{node=~\"kwok-node-.*\"})",
-              "hide": false,
-              "instant": false,
-              "legendFormat": "Total",
-              "range": true,
-              "refId": "B"
-            },
-            {
-              "datasource": "$datasource",
-              "editorMode": "code",
-              "expr": "sum(kube_node_status_allocatable{node=~\"kwok-node-.*\",resource=\"pods\"})",
-              "instant": false,
-              "legendFormat": "Limit",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "Pods",
-          "type": "stat"
-        },
-        {
-          "datasource": "$datasource",
-          "fieldConfig": {
-            "defaults": {
-              "color": {
+                "fixedColor": "semi-dark-blue",
                 "mode": "fixed"
               },
               "mappings": [],
@@ -628,7 +617,7 @@ data:
             "overrides": []
           },
           "gridPos": {
-            "h": 8,
+            "h": 4,
             "w": 2,
             "x": 22,
             "y": 0
@@ -662,6 +651,95 @@ data:
             }
           ],
           "title": "Nodes",
+          "type": "stat"
+        },
+        {
+          "datasource": "$datasource",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "fixedColor": "semi-dark-purple",
+                "mode": "fixed"
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              },
+              "unitScale": true
+            },
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "memory"
+                },
+                "properties": [
+                  {
+                    "id": "unitScale",
+                    "value": true
+                  },
+                  {
+                    "id": "unit",
+                    "value": "bytes"
+                  }
+                ]
+              }
+            ]
+          },
+          "gridPos": {
+            "h": 4,
+            "w": 2,
+            "x": 22,
+            "y": 4
+          },
+          "id": 18,
+          "options": {
+            "colorMode": "value",
+            "graphMode": "area",
+            "justifyMode": "auto",
+            "orientation": "horizontal",
+            "reduceOptions": {
+              "calcs": [
+                "lastNotNull"
+              ],
+              "fields": "",
+              "values": false
+            },
+            "showPercentChange": false,
+            "textMode": "auto",
+            "wideLayout": true
+          },
+          "pluginVersion": "10.3.3",
+          "targets": [
+            {
+              "datasource": "$datasource",
+              "expr": "sum(kube_pod_status_phase{phase=\"Running\"} * on (pod) group_left(uid) kube_pod_info{node=~\"kwok-node-.*\"})",
+              "hide": false,
+              "instant": false,
+              "legendFormat": "Total",
+              "range": true,
+              "refId": "B"
+            },
+            {
+              "datasource": "$datasource",
+              "expr": "sum(kube_node_status_allocatable{node=~\"kwok-node-.*\",resource=\"pods\"})",
+              "instant": false,
+              "legendFormat": "Limit",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "Pods",
           "type": "stat"
         },
         {
