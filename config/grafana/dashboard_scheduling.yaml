@@ -50,7 +50,7 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "stepBefore",
+                "lineInterpolation": "smooth",
                 "lineStyle": {
                   "fill": "solid"
                 },
@@ -59,7 +59,7 @@ data:
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -199,7 +199,7 @@ data:
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -650,13 +650,13 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "stepAfter",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -842,7 +842,7 @@ data:
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -933,13 +933,13 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "linear",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -1107,14 +1107,14 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "stepAfter",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 2,
                 "scaleDistribution": {
                   "log": 10,
                   "type": "log"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -1195,7 +1195,7 @@ data:
                 "axisPlacement": "auto",
                 "barAlignment": 0,
                 "drawStyle": "line",
-                "fillOpacity": 0,
+                "fillOpacity": 25,
                 "gradientMode": "none",
                 "hideFrom": {
                   "legend": false,
@@ -1203,17 +1203,20 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "linear",
+                "lineInterpolation": "smooth",
+                "lineStyle": {
+                  "fill": "solid"
+                },
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
-                  "mode": "none"
+                  "mode": "normal"
                 },
                 "thresholdsStyle": {
                   "mode": "off"
@@ -1295,8 +1298,7 @@ data:
             {
               "datasource": "$datasource",
               "disableTextWrap": false,
-              "editorMode": "builder",
-              "expr": "sum(kube_job_status_failed)",
+              "expr": "sum(kube_job_status_failed == 1)",
               "fullMetaSearch": false,
               "hide": false,
               "includeNullMetadata": true,
@@ -1309,8 +1311,7 @@ data:
             {
               "datasource": "$datasource",
               "disableTextWrap": false,
-              "editorMode": "builder",
-              "expr": "sum(kube_job_status_succeeded)",
+              "expr": "sum(kube_job_complete{condition=\"true\"})",
               "fullMetaSearch": false,
               "hide": false,
               "includeNullMetadata": true,
@@ -1319,6 +1320,15 @@ data:
               "range": true,
               "refId": "B",
               "useBackend": false
+            },
+            {
+              "datasource": "$datasource",
+              "expr": "count (kube_job_status_active > 0 or vector(0))",
+              "hide": false,
+              "instant": false,
+              "legendFormat": "active",
+              "range": true,
+              "refId": "C"
             }
           ],
           "title": "Batch Jobs Status",
@@ -1332,7 +1342,7 @@ data:
                 "mode": "continuous-GrYlRd"
               },
               "custom": {
-                "axisBorderShow": false,
+                "axisBorderShow": true,
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
                 "axisLabel": "",
@@ -1347,13 +1357,13 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "linear",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -1377,6 +1387,7 @@ data:
                   }
                 ]
               },
+              "unit": "s",
               "unitScale": true
             },
             "overrides": []
@@ -1440,13 +1451,13 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "linear",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -1534,13 +1545,13 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "linear",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
@@ -1628,13 +1639,13 @@ data:
                   "viz": false
                 },
                 "insertNulls": false,
-                "lineInterpolation": "linear",
+                "lineInterpolation": "smooth",
                 "lineWidth": 1,
                 "pointSize": 5,
                 "scaleDistribution": {
                   "type": "linear"
                 },
-                "showPoints": "auto",
+                "showPoints": "never",
                 "spanNulls": false,
                 "stacking": {
                   "group": "A",
