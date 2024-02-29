@@ -7,6 +7,8 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+
+	kueue "sigs.k8s.io/kueue/client-go/clientset/versioned"
 )
 
 var ApplyOptions = metav1.ApplyOptions{FieldManager: "test", Force: true}
@@ -14,11 +16,13 @@ var ApplyOptions = metav1.ApplyOptions{FieldManager: "test", Force: true}
 type Client interface {
 	Core() kubernetes.Interface
 	Dynamic() dynamic.Interface
+	Kueue() kueue.Interface
 }
 
 type testClient struct {
 	core    kubernetes.Interface
 	dynamic dynamic.Interface
+	kueue   kueue.Interface
 }
 
 var _ Client = (*testClient)(nil)
@@ -29,6 +33,10 @@ func (t *testClient) Core() kubernetes.Interface {
 
 func (t *testClient) Dynamic() dynamic.Interface {
 	return t.dynamic
+}
+
+func (t *testClient) Kueue() kueue.Interface {
+	return t.kueue
 }
 
 func newTestClient(cfg *rest.Config) (Client, error) {
@@ -53,8 +61,14 @@ func newTestClient(cfg *rest.Config) (Client, error) {
 		return nil, err
 	}
 
+	kueueClient, err := kueue.NewForConfig(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	return &testClient{
 		core:    kubeClient,
 		dynamic: dynamicClient,
+		kueue:   kueueClient,
 	}, nil
 }
