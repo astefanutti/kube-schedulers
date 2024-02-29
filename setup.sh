@@ -56,15 +56,23 @@ kubectl wait --for condition=Established --all CustomResourceDefinition
 kubectl apply -f config/kwok/stage-fast.yaml
 
 # Deploy Prometheus
+echo "Deploying Prometheus"
 kubectl apply -f config/prometheus/crds
 kubectl wait --for condition=Established --all CustomResourceDefinition
 kubectl apply -k config/prometheus
 
 # Deploy kube-state-metrics
+echo "Deploying kube-state-metrics"
 kubectl apply -k config/kube-state-metrics
 
 # Deploy Prometheus monitors
+echo "Deploying Prometheus monitors"
 kubectl apply -f config/kube-system
 
 # Deploy Grafana
+echo "Deploying Grafana"
 kubectl apply -k config/grafana
+
+# Deploy Kueue
+echo "Deploying Kueue"
+kubectl apply --server-side -f config/kueue/manifests.yaml
