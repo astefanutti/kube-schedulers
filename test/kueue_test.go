@@ -8,6 +8,7 @@ import (
 	. "github.com/astefanutti/kube-schedulers/test/support"
 	. "github.com/onsi/gomega"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -157,7 +158,7 @@ func TestKueue(t *testing.T) {
 	localQueue, err := test.Client().Kueue().KueueV1beta1().LocalQueues(ns.Name).Apply(test.Ctx(), localQueueAC, ApplyOptions)
 	test.Expect(err).NotTo(HaveOccurred())
 
-	for j := 0; j < 200; j++ {
+	for j := 0; j < JOBS_COUNT; j++ {
 		name := fmt.Sprintf("job-%03d", j)
 
 		batchAC := batchv1ac.Job(name, ns.Name).
@@ -191,6 +192,16 @@ func TestKueue(t *testing.T) {
 		_, err := test.Client().Core().BatchV1().Jobs(ns.Name).Apply(test.Ctx(), batchAC, ApplyOptions)
 		test.Expect(err).NotTo(HaveOccurred())
 	}
+
+	test.T().Logf("Waiting for jobs to complete")
+
+	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(15 * time.Minute).
+		Should(And(
+			HaveLen(JOBS_COUNT),
+			HaveEach(Or(
+				WithTransform(ConditionStatus(batchv1.JobComplete), Equal(corev1.ConditionTrue)),
+				WithTransform(ConditionStatus(batchv1.JobFailed), Equal(corev1.ConditionTrue)),
+			))))
 
 	test.T().Logf("Cleaning namespace %s up", ns.Name)
 }
