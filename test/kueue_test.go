@@ -29,12 +29,12 @@ func TestKueue(t *testing.T) {
 			kwokNode:                       "fake",
 		}).
 		WithLabels(map[string]string{
-			"type":                          "kwok",
-			"kubernetes.io/arch":            "amd64",
-			"kubernetes.io/hostname":        "sample",
-			"kubernetes.io/os":              "linux",
-			"kubernetes.io/role":            "agent",
-			"node-role.kubernetes.io/agent": "",
+			"type":                           "kwok",
+			"kubernetes.io/arch":             "amd64",
+			"kubernetes.io/hostname":         "sample",
+			"kubernetes.io/os":               "linux",
+			"kubernetes.io/role":             "sample",
+			"node-role.kubernetes.io/sample": "",
 		}).
 		WithSpec(corev1ac.NodeSpec().
 			WithTaints(corev1ac.Taint().
