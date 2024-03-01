@@ -3,6 +3,7 @@ package test
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	. "github.com/astefanutti/kube-schedulers/test/support"
 	. "github.com/onsi/gomega"
@@ -167,8 +168,11 @@ func TestKueue(t *testing.T) {
 				WithCompletions(10).
 				WithParallelism(10).
 				WithBackoffLimit(0).
-				WithActiveDeadlineSeconds(120).
+				WithActiveDeadlineSeconds(300).
 				WithTemplate(corev1ac.PodTemplateSpec().
+					WithAnnotations(map[string]string{
+						"duration": (2 * time.Minute).String(),
+					}).
 					WithSpec(corev1ac.PodSpec().
 						WithRestartPolicy(corev1.RestartPolicyNever).
 						WithContainers(corev1ac.Container().

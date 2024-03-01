@@ -138,7 +138,8 @@ metadata:
   name: pod-complete
 spec:
   delay:
-    durationMilliseconds: 60000
+    durationFrom:
+      expressionFrom: '.metadata.annotations["duration"]'
   next:
     statusTemplate: |
       {{ $now := Now }}
