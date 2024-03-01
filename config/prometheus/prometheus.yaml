@@ -12,7 +12,7 @@ spec:
   ruleSelector: {}
   resources:
     requests:
-      memory: 400Mi
+      memory: 1Gi
   enableAdminAPI: true
   externalUrl: /prometheus/
   routePrefix: /
