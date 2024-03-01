@@ -2,7 +2,10 @@ package test
 
 const kwokNode = "kwok.x-k8s.io/node"
 
-const JOBS_COUNT = 200
+const (
+	NodesCount = 100
+	JobsCount  = 500
+)
 
 type NodeType string
 

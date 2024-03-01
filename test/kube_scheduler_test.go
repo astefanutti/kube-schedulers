@@ -61,7 +61,7 @@ func TestKubeScheduler(t *testing.T) {
 	test.Eventually(Node(test, "sample")).
 		Should(WithTransform(ConditionStatus(corev1.NodeReady), Equal(corev1.ConditionTrue)))
 
-	for i := 0; i < 50; i++ {
+	for i := 0; i < NodesCount; i++ {
 		name := fmt.Sprintf("kwok-node-%03d", i)
 		node := corev1ac.Node(name).
 			WithAnnotations(map[string]string{
@@ -108,7 +108,7 @@ func TestKubeScheduler(t *testing.T) {
 
 	ns := test.NewTestNamespace()
 
-	for j := 0; j < JOBS_COUNT; j++ {
+	for j := 0; j < JobsCount; j++ {
 		name := fmt.Sprintf("job-%03d", j)
 
 		batchAC := batchv1ac.Job(name, ns.Name).
@@ -157,7 +157,7 @@ func TestKubeScheduler(t *testing.T) {
 
 	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(15 * time.Minute).
 		Should(And(
-			HaveLen(JOBS_COUNT),
+			HaveLen(JobsCount),
 			HaveEach(Or(
 				WithTransform(ConditionStatus(batchv1.JobComplete), Equal(corev1.ConditionTrue)),
 				WithTransform(ConditionStatus(batchv1.JobFailed), Equal(corev1.ConditionTrue)),

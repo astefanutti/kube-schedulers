@@ -67,7 +67,7 @@ func TestKueue(t *testing.T) {
 
 	allocatableResources := corev1.ResourceList{}
 
-	for i := 0; i < 50; i++ {
+	for i := 0; i < NodesCount; i++ {
 		name := fmt.Sprintf("kwok-node-%03d", i)
 		nodeAC := corev1ac.Node(name).
 			WithAnnotations(map[string]string{
@@ -159,7 +159,7 @@ func TestKueue(t *testing.T) {
 	localQueue, err := test.Client().Kueue().KueueV1beta1().LocalQueues(ns.Name).Apply(test.Ctx(), localQueueAC, ApplyOptions)
 	test.Expect(err).NotTo(HaveOccurred())
 
-	for j := 0; j < JOBS_COUNT; j++ {
+	for j := 0; j < JobsCount; j++ {
 		name := fmt.Sprintf("job-%03d", j)
 
 		batchAC := batchv1ac.Job(name, ns.Name).
@@ -198,7 +198,7 @@ func TestKueue(t *testing.T) {
 
 	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(15 * time.Minute).
 		Should(And(
-			HaveLen(JOBS_COUNT),
+			HaveLen(JobsCount),
 			HaveEach(Or(
 				WithTransform(ConditionStatus(batchv1.JobComplete), Equal(corev1.ConditionTrue)),
 				WithTransform(ConditionStatus(batchv1.JobFailed), Equal(corev1.ConditionTrue)),
