@@ -14,6 +14,7 @@ kubeadmConfigPatches:
   controllerManager:
     extraArgs:
       bind-address: 0.0.0.0
+      concurrent-job-syncs: "100"
   etcd:
     local:
       extraArgs:
