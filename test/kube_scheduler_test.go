@@ -11,6 +11,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/util/wait"
 	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
 )
@@ -118,7 +119,7 @@ func TestKubeScheduler(t *testing.T) {
 				WithActiveDeadlineSeconds(300).
 				WithTemplate(corev1ac.PodTemplateSpec().
 					WithAnnotations(map[string]string{
-						"duration": (2 * time.Minute).String(),
+						"duration": wait.Jitter(2*time.Minute, 0.5).String(),
 					}).
 					WithSpec(corev1ac.PodSpec().
 						WithRestartPolicy(corev1.RestartPolicyNever).
