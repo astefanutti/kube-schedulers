@@ -261,6 +261,21 @@ data:
                     }
                   }
                 ]
+              },
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Active"
+                },
+                "properties": [
+                  {
+                    "id": "color",
+                    "value": {
+                      "fixedColor": "semi-dark-blue",
+                      "mode": "fixed"
+                    }
+                  }
+                ]
               }
             ]
           },
@@ -287,7 +302,7 @@ data:
             {
               "datasource": "$datasource",
               "disableTextWrap": false,
-              "expr": "sum(kube_job_status_failed == 1)",
+              "expr": "count (kube_job_failed{condition=\"true\",namespace=~\"test.*\"})",
               "fullMetaSearch": false,
               "hide": false,
               "includeNullMetadata": true,
@@ -300,7 +315,7 @@ data:
             {
               "datasource": "$datasource",
               "disableTextWrap": false,
-              "expr": "sum(kube_job_complete{condition=\"true\"})",
+              "expr": "count (kube_job_complete{condition=\"true\",namespace=~\"test.*\"})",
               "fullMetaSearch": false,
               "hide": false,
               "includeNullMetadata": true,
@@ -312,10 +327,10 @@ data:
             },
             {
               "datasource": "$datasource",
-              "expr": "count (kube_job_status_active > 0 or vector(0))",
+              "expr": "count (kube_job_status_active{namespace=~\"test.*\"} > 0 or vector(0))",
               "hide": false,
               "instant": false,
-              "legendFormat": "active",
+              "legendFormat": "Active",
               "range": true,
               "refId": "C"
             }
