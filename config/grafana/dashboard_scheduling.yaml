@@ -1018,7 +1018,7 @@ data:
               "datasource": "$datasource",
               "disableTextWrap": false,
               "exemplar": false,
-              "expr": "sum by(le) (increase(scheduler_pod_scheduling_sli_duration_seconds_bucket[$__rate_interval]))",
+              "expr": "sum by(le) (increase(scheduler_pod_scheduling_duration_seconds_bucket[$__rate_interval]))",
               "format": "heatmap",
               "fullMetaSearch": false,
               "includeNullMetadata": true,
