@@ -20,6 +20,10 @@ func ConditionStatus[T conditionType](conditionType T) func(any) corev1.Conditio
 			if c := getNodeCondition(o.Status.Conditions, corev1.NodeConditionType(conditionType)); c != nil {
 				return c.Status
 			}
+		case batchv1.Job:
+			if c := getJobCondition(o.Status.Conditions, batchv1.JobConditionType(conditionType)); c != nil {
+				return c.Status
+			}
 		case *batchv1.Job:
 			if c := getJobCondition(o.Status.Conditions, batchv1.JobConditionType(conditionType)); c != nil {
 				return c.Status
