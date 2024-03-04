@@ -56,15 +56,15 @@ kubectl apply -f config/kwok/kwok.yaml
 kubectl wait --for condition=Established --all CustomResourceDefinition
 kubectl apply -f config/kwok/stage-fast.yaml
 
-# Deploy scheduler-plugins
-echo "Deploying scheduler-plugins"
-kubectl apply -f config/scheduler-plugins
-
 # Deploy Prometheus
 echo "Deploying Prometheus"
 kubectl apply -f config/prometheus/crds
 kubectl wait --for condition=Established --all CustomResourceDefinition
 kubectl apply -k config/prometheus
+
+# Deploy scheduler-plugins
+echo "Deploying scheduler-plugins"
+kubectl apply -f config/scheduler-plugins
 
 # Deploy kube-state-metrics
 echo "Deploying kube-state-metrics"

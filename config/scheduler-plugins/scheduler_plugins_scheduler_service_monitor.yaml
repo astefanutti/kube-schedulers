@@ -1,0 +1,23 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: scheduler-plugins-scheduler
+  namespace: scheduler-plugins
+spec:
+  endpoints:
+    - path: /metrics
+      port: metrics
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
+    - path: /metrics/resources
+      port: metrics
+      scheme: https
+      bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
+      tlsConfig:
+        insecureSkipVerify: true
+  jobLabel: component
+  selector:
+    matchLabels:
+      component: scheduler-plugins-scheduler
