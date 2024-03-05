@@ -113,10 +113,10 @@ func TestKubeScheduler(t *testing.T) {
 
 		batchAC := batchv1ac.Job(name, ns.Name).
 			WithSpec(batchv1ac.JobSpec().
-				WithCompletions(10).
-				WithParallelism(10).
+				WithCompletions(PodsByJobCount).
+				WithParallelism(PodsByJobCount).
+				WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
 				WithBackoffLimit(0).
-				WithActiveDeadlineSeconds(300).
 				WithTemplate(corev1ac.PodTemplateSpec().
 					WithAnnotations(map[string]string{
 						"duration": wait.Jitter(2*time.Minute, 0.5).String(),
