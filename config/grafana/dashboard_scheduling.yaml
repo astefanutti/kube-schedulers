@@ -329,7 +329,7 @@ data:
             },
             {
               "datasource": "$datasource",
-              "expr": "count (kube_job_status_active{namespace=~\"test.*\"} > 0 or vector(0))",
+              "expr": "count (kube_job_status_active{namespace=~\"test.*\"} > 0) or vector(0)",
               "hide": false,
               "instant": false,
               "legendFormat": "Active",
