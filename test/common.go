@@ -19,6 +19,11 @@ const (
 	JobActiveDeadlineSeconds = 600
 )
 
+var (
+	PodResourceCPU    = resource.MustParse("1")
+	PodResourceMemory = resource.MustParse("1Gi")
+)
+
 type NodeType string
 
 var (

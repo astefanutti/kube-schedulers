@@ -10,7 +10,6 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/util/wait"
 	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
@@ -35,6 +34,12 @@ func TestCoscheduling(t *testing.T) {
 	for j := 0; j < JobsCount; j++ {
 		name := fmt.Sprintf("job-%03d", j)
 
+		groupResourceCPU := PodResourceCPU.DeepCopy()
+		groupResourceCPU.Mul(JobsCount)
+
+		groupResourceMemory := PodResourceMemory.DeepCopy()
+		groupResourceMemory.Mul(JobsCount)
+
 		podGroup := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"apiVersion": schedulingv1alpha1.SchemeGroupVersion.String(),
@@ -45,8 +50,8 @@ func TestCoscheduling(t *testing.T) {
 				"spec": map[string]interface{}{
 					"minMember": PodsByJobCount,
 					"minResources": map[string]interface{}{
-						"cpu":    "10",
-						"memory": "10Gi",
+						"cpu":    groupResourceCPU.String(),
+						"memory": groupResourceMemory.String(),
 					},
 					"scheduleTimeoutSeconds": 60,
 				},
@@ -93,12 +98,12 @@ func TestCoscheduling(t *testing.T) {
 							WithImage("fake").
 							WithResources(corev1ac.ResourceRequirements().
 								WithRequests(corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1"),
-									corev1.ResourceMemory: resource.MustParse("1Gi"),
+									corev1.ResourceCPU:    PodResourceCPU,
+									corev1.ResourceMemory: PodResourceMemory,
 								}).
 								WithLimits(corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1"),
-									corev1.ResourceMemory: resource.MustParse("1Gi"),
+									corev1.ResourceCPU:    PodResourceCPU,
+									corev1.ResourceMemory: PodResourceMemory,
 								}))))))
 
 		_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Apply(test.Ctx(), batchAC, ApplyOptions)

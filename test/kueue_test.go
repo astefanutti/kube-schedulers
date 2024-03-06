@@ -10,7 +10,6 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
@@ -100,12 +99,12 @@ func TestKueue(t *testing.T) {
 							WithImage("fake").
 							WithResources(corev1ac.ResourceRequirements().
 								WithRequests(corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1"),
-									corev1.ResourceMemory: resource.MustParse("1Gi"),
+									corev1.ResourceCPU:    PodResourceCPU,
+									corev1.ResourceMemory: PodResourceMemory,
 								}).
 								WithLimits(corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("1"),
-									corev1.ResourceMemory: resource.MustParse("1Gi"),
+									corev1.ResourceCPU:    PodResourceCPU,
+									corev1.ResourceMemory: PodResourceMemory,
 								}))))))
 
 		_, err := test.Client().Core().BatchV1().Jobs(ns.Name).Apply(test.Ctx(), batchAC, ApplyOptions)
