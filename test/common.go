@@ -5,8 +5,12 @@ import (
 	. "github.com/astefanutti/kube-schedulers/test/support"
 	. "github.com/onsi/gomega"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
 )
 
@@ -30,6 +34,49 @@ var (
 	fake   NodeType = "fake"
 	sample NodeType = "sample"
 )
+
+func annotatePodsWithJobReadiness(test Test, ns *corev1.Namespace) {
+	watcher, err := test.Client().Core().BatchV1().Jobs(ns.Name).Watch(test.Ctx(), metav1.ListOptions{})
+	test.Expect(err).NotTo(HaveOccurred())
+
+	go func() {
+		defer watcher.Stop()
+		for {
+			select {
+			case <-test.Ctx().Done():
+				test.T().Errorf("error: %v", test.Ctx().Err())
+			case e := <-watcher.ResultChan():
+				switch e.Type {
+				case watch.Error:
+					test.T().Errorf("error watching for Jobs: %v", apierrors.FromObject(e.Object))
+				case watch.Added, watch.Modified:
+					job, ok := e.Object.(*batchv1.Job)
+					if !ok {
+						test.T().Errorf("unexpected event object: %v", e.Object)
+					}
+					if job.Status.CompletionTime != nil {
+						continue
+					}
+					if ready := job.Status.Ready; ready != nil && *ready == *job.Spec.Parallelism {
+						pods, err := test.Client().Core().CoreV1().Pods(ns.Name).List(test.Ctx(), metav1.ListOptions{
+							LabelSelector: "batch.kubernetes.io/job-name=" + job.Name,
+						})
+						test.Expect(err).NotTo(HaveOccurred())
+
+						for _, pod := range pods.Items {
+							podAC := corev1ac.Pod(pod.Name, ns.Name).
+								WithAnnotations(map[string]string{
+									"job-ready": "true",
+								})
+							_, err := test.Client().Core().CoreV1().Pods(ns.Name).ApplyStatus(test.Ctx(), podAC, ApplyOptions)
+							test.Expect(err).NotTo(HaveOccurred())
+						}
+					}
+				}
+			}
+		}
+	}()
+}
 
 func applyNodeConfiguration(test support.Test, nodeAC *corev1ac.NodeApplyConfiguration) *corev1.Node {
 	test.T().Helper()
