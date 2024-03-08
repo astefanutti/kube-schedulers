@@ -115,7 +115,7 @@ func TestKueue(t *testing.T) {
 
 	test.T().Logf("Waiting for jobs to complete")
 
-	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(15 * time.Minute).
+	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(JobsCompletionTimeout).
 		Should(And(
 			HaveLen(JobsCount),
 			HaveEach(Or(

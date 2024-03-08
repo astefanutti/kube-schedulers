@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"time"
 
 	"github.com/astefanutti/kube-schedulers/test/support"
 	. "github.com/astefanutti/kube-schedulers/test/support"
@@ -24,6 +25,7 @@ const (
 	JobsCount                = 500
 	PodsByJobCount           = 10
 	JobActiveDeadlineSeconds = 600
+	JobsCompletionTimeout    = 30 * time.Minute
 )
 
 var (

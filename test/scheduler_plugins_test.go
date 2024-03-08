@@ -53,7 +53,7 @@ func TestCoscheduling(t *testing.T) {
 						"cpu":    groupResourceCPU.String(),
 						"memory": groupResourceMemory.String(),
 					},
-					"scheduleTimeoutSeconds": 60,
+					"scheduleTimeoutSeconds": int64(JobsCompletionTimeout.Seconds()),
 				},
 			},
 		}
@@ -68,7 +68,7 @@ func TestCoscheduling(t *testing.T) {
 			WithSpec(batchv1ac.JobSpec().
 				WithCompletions(PodsByJobCount).
 				WithParallelism(PodsByJobCount).
-				WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
+				// WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
 				WithBackoffLimit(0).
 				WithTemplate(corev1ac.PodTemplateSpec().
 					WithAnnotations(map[string]string{
@@ -114,7 +114,7 @@ func TestCoscheduling(t *testing.T) {
 
 	test.T().Logf("Waiting for jobs to complete")
 
-	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(15 * time.Minute).
+	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(JobsCompletionTimeout).
 		Should(And(
 			HaveLen(JobsCount),
 			HaveEach(Or(
