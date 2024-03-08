@@ -1,6 +1,8 @@
 package test
 
 import (
+	"context"
+
 	"github.com/astefanutti/kube-schedulers/test/support"
 	. "github.com/astefanutti/kube-schedulers/test/support"
 	. "github.com/onsi/gomega"
@@ -12,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/watch"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
+	retrywatch "k8s.io/client-go/tools/watch"
 )
 
 const kwokNode = "kwok.x-k8s.io/node"
@@ -35,17 +38,38 @@ var (
 	sample NodeType = "sample"
 )
 
+type watchInterface interface {
+	Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error)
+}
+
+type watcher struct {
+	ctx    context.Context
+	client watchInterface
+}
+
+func newWatcher(ctx context.Context, client watchInterface) *watcher {
+	return &watcher{ctx: ctx, client: client}
+}
+
+func (w *watcher) Watch(options metav1.ListOptions) (watch.Interface, error) {
+	return w.client.Watch(w.ctx, options)
+}
+
 func annotatePodsWithJobReadiness(test Test, ns *corev1.Namespace) {
-	watcher, err := test.Client().Core().BatchV1().Jobs(ns.Name).Watch(test.Ctx(), metav1.ListOptions{})
+	jobs, err := test.Client().Core().BatchV1().Jobs(ns.Name).List(test.Ctx(), metav1.ListOptions{})
+	test.Expect(err).NotTo(HaveOccurred())
+
+	jobsWatcher, err := retrywatch.NewRetryWatcher(jobs.ResourceVersion, newWatcher(test.Ctx(),
+		test.Client().Core().BatchV1().Jobs(ns.Name)))
 	test.Expect(err).NotTo(HaveOccurred())
 
 	go func() {
-		defer watcher.Stop()
+		defer jobsWatcher.Stop()
 		for {
 			select {
 			case <-test.Ctx().Done():
 				test.T().Errorf("error: %v", test.Ctx().Err())
-			case e := <-watcher.ResultChan():
+			case e := <-jobsWatcher.ResultChan():
 				switch e.Type {
 				case watch.Error:
 					test.T().Errorf("error watching for Jobs: %v", apierrors.FromObject(e.Object))
