@@ -304,7 +304,7 @@ data:
             {
               "datasource": "$datasource",
               "disableTextWrap": false,
-              "expr": "count (kube_job_failed{condition=\"true\",namespace=~\"test.*\"})",
+              "expr": "count (kube_job_failed{condition=\"true\",namespace=~\"test.*\", job_name=~\"job.*\"})",
               "fullMetaSearch": false,
               "hide": false,
               "includeNullMetadata": true,
@@ -317,7 +317,7 @@ data:
             {
               "datasource": "$datasource",
               "disableTextWrap": false,
-              "expr": "count (kube_job_complete{condition=\"true\",namespace=~\"test.*\"})",
+              "expr": "count (kube_job_complete{condition=\"true\",namespace=~\"test.*\", job_name=~\"job.*\"})",
               "fullMetaSearch": false,
               "hide": false,
               "includeNullMetadata": true,
@@ -329,7 +329,7 @@ data:
             },
             {
               "datasource": "$datasource",
-              "expr": "count (kube_job_status_active{namespace=~\"test.*\"} > 0) or vector(0)",
+              "expr": "count (kube_job_status_active{namespace=~\"test.*\", job_name=~\"job.*\"} > 0) or vector(0)",
               "hide": false,
               "instant": false,
               "legendFormat": "Active",
@@ -1211,7 +1211,7 @@ data:
           "targets": [
             {
               "datasource": "$datasource",
-              "expr": "avg(kube_pod_status_scheduled_time{pod=~\"job-.*\"} - on(uid,pod) kube_pod_created{pod=~\"job-.*\"})",
+              "expr": "avg(kube_pod_status_scheduled_time{pod=~\"sample-.*\"} - on(uid,pod) kube_pod_created{pod=~\"sample-.*\"})",
               "format": "time_series",
               "instant": false,
               "legendFormat": "Average scheduling time",
