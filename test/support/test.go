@@ -26,20 +26,6 @@ type Test interface {
 	NewTestNamespace(...Option[*corev1.Namespace]) *corev1.Namespace
 }
 
-type Option[T any] interface {
-	applyTo(to T) error
-}
-
-type errorOption[T any] func(to T) error
-
-// nolint: unused
-// To be removed when the false-positivity is fixed.
-func (o errorOption[T]) applyTo(to T) error {
-	return o(to)
-}
-
-var _ Option[any] = errorOption[any](nil)
-
 func With(t *testing.T) Test {
 	return WithConfig(t, nil)
 }

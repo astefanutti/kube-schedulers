@@ -19,11 +19,10 @@ func createTestNamespace(t Test, options ...Option[*corev1.Namespace]) *corev1.N
 		},
 	}
 
-	for _, option := range options {
-		t.Expect(option.applyTo(namespace)).To(gomega.Succeed())
-	}
+	err := applyOptions(namespace, options...)
+	t.Expect(err).NotTo(gomega.HaveOccurred())
 
-	namespace, err := t.Client().Core().CoreV1().Namespaces().Create(t.Ctx(), namespace, metav1.CreateOptions{})
+	namespace, err = t.Client().Core().CoreV1().Namespaces().Create(t.Ctx(), namespace, metav1.CreateOptions{})
 	t.Expect(err).NotTo(gomega.HaveOccurred())
 
 	return namespace

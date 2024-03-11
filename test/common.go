@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"github.com/astefanutti/kube-schedulers/test/support"
@@ -13,7 +14,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
+	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
 	retrywatch "k8s.io/client-go/tools/watch"
 )
@@ -26,6 +30,8 @@ const (
 	PodsByJobCount           = 10
 	JobActiveDeadlineSeconds = 600
 	JobsCompletionTimeout    = 30 * time.Minute
+
+	sampleJobPrefix = "sample-"
 )
 
 var (
@@ -57,7 +63,9 @@ func (w *watcher) Watch(options metav1.ListOptions) (watch.Interface, error) {
 	return w.client.Watch(w.ctx, options)
 }
 
-func annotatePodsWithJobReadiness(test Test, ns *corev1.Namespace) {
+func watchJobs(test Test, ns *corev1.Namespace, handlers ...func(Test, *batchv1.Job)) {
+	test.T().Helper()
+
 	jobs, err := test.Client().Core().BatchV1().Jobs(ns.Name).List(test.Ctx(), metav1.ListOptions{})
 	test.Expect(err).NotTo(HaveOccurred())
 
@@ -82,28 +90,55 @@ func annotatePodsWithJobReadiness(test Test, ns *corev1.Namespace) {
 					if !ok {
 						test.T().Errorf("unexpected event object: %v", e.Object)
 					}
-					if job.Status.CompletionTime != nil {
-						continue
-					}
-					if ready := job.Status.Ready; ready != nil && *ready == *job.Spec.Parallelism {
-						pods, err := test.Client().Core().CoreV1().Pods(ns.Name).List(test.Ctx(), metav1.ListOptions{
-							LabelSelector: "batch.kubernetes.io/job-name=" + job.Name,
-						})
-						test.Expect(err).NotTo(HaveOccurred())
-
-						for _, pod := range pods.Items {
-							podAC := corev1ac.Pod(pod.Name, ns.Name).
-								WithAnnotations(map[string]string{
-									"job-ready": "true",
-								})
-							_, err := test.Client().Core().CoreV1().Pods(ns.Name).ApplyStatus(test.Ctx(), podAC, ApplyOptions)
-							test.Expect(err).NotTo(HaveOccurred())
-						}
+					for _, handler := range handlers {
+						handler(test, job)
 					}
 				}
 			}
 		}
 	}()
+}
+
+func annotatePodsWithJobReadiness(test Test, job *batchv1.Job) {
+	if job.Status.CompletionTime != nil || !job.Status.CompletionTime.IsZero() {
+		return
+	}
+	if ready := job.Status.Ready; ready != nil && *ready == *job.Spec.Parallelism {
+		pods, err := test.Client().Core().CoreV1().Pods(job.Namespace).List(test.Ctx(), metav1.ListOptions{
+			LabelSelector: batchv1.JobNameLabel + "=" + job.Name,
+		})
+		test.Expect(err).NotTo(HaveOccurred())
+
+		for _, pod := range pods.Items {
+			podAC := corev1ac.Pod(pod.Name, pod.Namespace).
+				WithAnnotations(map[string]string{
+					"job-ready": "true",
+				})
+			_, err := test.Client().Core().CoreV1().Pods(pod.Namespace).ApplyStatus(test.Ctx(), podAC, ApplyOptions)
+			test.Expect(err).NotTo(HaveOccurred())
+		}
+	}
+}
+
+func injectJobSamples(test Test, job *batchv1.Job) {
+	if !strings.HasPrefix(job.Name, sampleJobPrefix) {
+		return
+	}
+	if job.Status.CompletionTime == nil || job.Status.CompletionTime.IsZero() {
+		return
+	}
+	applyJobConfiguration(test, sampleJobConfiguration(job.GenerateName).WithNamespace(job.Namespace))
+}
+
+func applyJobConfiguration(test support.Test, jobAC *batchv1ac.JobApplyConfiguration) *batchv1.Job {
+	test.T().Helper()
+
+	test.Expect(jobAC.Namespace).NotTo(BeNil())
+
+	job, err := test.Client().Core().BatchV1().Jobs(*jobAC.Namespace).Apply(test.Ctx(), jobAC, ApplyOptions)
+	test.Expect(err).NotTo(HaveOccurred())
+
+	return job
 }
 
 func applyNodeConfiguration(test support.Test, nodeAC *corev1ac.NodeApplyConfiguration) *corev1.Node {
@@ -189,4 +224,48 @@ func workerNodeConfiguration(name string) *corev1ac.NodeApplyConfiguration {
 			WithNodeInfo(corev1ac.NodeSystemInfo().
 				WithKubeProxyVersion("fake").
 				WithKubeletVersion("fake")))
+}
+
+func sampleJobConfiguration(name string) *batchv1ac.JobApplyConfiguration {
+	return batchv1ac.Job(name+"-"+rand.String(5), "").
+		WithGenerateName(name).
+		WithLabels(map[string]string{
+			"app.kubernetes.io/part-of": "sample-jobs",
+		}).
+		WithSpec(batchv1ac.JobSpec().
+			WithCompletions(1).
+			WithParallelism(1).
+			WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
+			WithBackoffLimit(0).
+			WithTemplate(corev1ac.PodTemplateSpec().
+				WithAnnotations(map[string]string{
+					"duration": wait.Jitter(10*time.Second, 0.5).String(),
+				}).
+				WithSpec(corev1ac.PodSpec().
+					WithRestartPolicy(corev1.RestartPolicyNever).
+					WithAffinity(corev1ac.Affinity().
+						WithNodeAffinity(corev1ac.NodeAffinity().
+							WithRequiredDuringSchedulingIgnoredDuringExecution(corev1ac.NodeSelector().
+								WithNodeSelectorTerms(corev1ac.NodeSelectorTerm().
+									WithMatchExpressions(corev1ac.NodeSelectorRequirement().
+										WithKey("type").
+										WithOperator(corev1.NodeSelectorOpIn).
+										WithValues("kwok")))))).
+					WithTolerations(corev1ac.Toleration().
+						WithKey(kwokNode).
+						WithEffect(corev1.TaintEffectNoSchedule).
+						WithOperator(corev1.TolerationOpEqual).
+						WithValue(string(sample))).
+					WithContainers(corev1ac.Container().
+						WithName("fake").
+						WithImage("fake").
+						WithResources(corev1ac.ResourceRequirements().
+							WithRequests(corev1.ResourceList{
+								corev1.ResourceCPU:    PodResourceCPU,
+								corev1.ResourceMemory: PodResourceMemory,
+							}).
+							WithLimits(corev1.ResourceList{
+								corev1.ResourceCPU:    PodResourceCPU,
+								corev1.ResourceMemory: PodResourceMemory,
+							}))))))
 }

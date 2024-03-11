@@ -8,10 +8,14 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func Jobs(t Test, ns *corev1.Namespace) func(g gomega.Gomega) []batchv1.Job {
+func Jobs(t Test, ns *corev1.Namespace, options ...Option[*metav1.ListOptions]) func(g gomega.Gomega) []batchv1.Job {
 	return func(g gomega.Gomega) []batchv1.Job {
-		batchs, err := t.Client().Core().BatchV1().Jobs(ns.Name).List(t.Ctx(), metav1.ListOptions{})
+		listOptions := metav1.ListOptions{}
+		err := applyOptions(&listOptions, options...)
 		g.Expect(err).NotTo(gomega.HaveOccurred())
-		return batchs.Items
+
+		list, err := t.Client().Core().BatchV1().Jobs(ns.Name).List(t.Ctx(), listOptions)
+		g.Expect(err).NotTo(gomega.HaveOccurred())
+		return list.Items
 	}
 }

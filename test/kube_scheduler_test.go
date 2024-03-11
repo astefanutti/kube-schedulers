@@ -26,6 +26,10 @@ func TestKubeScheduler(t *testing.T) {
 
 	ns := test.NewTestNamespace()
 
+	watchJobs(test, ns, annotatePodsWithJobReadiness, injectJobSamples)
+
+	test.T().Logf("Creating jobs")
+
 	for j := 0; j < JobsCount; j++ {
 		name := fmt.Sprintf("job-%03d", j)
 
@@ -71,11 +75,13 @@ func TestKubeScheduler(t *testing.T) {
 		test.Expect(err).NotTo(HaveOccurred())
 	}
 
-	annotatePodsWithJobReadiness(test, ns)
+	applyJobConfiguration(test, sampleJobConfiguration(fmt.Sprintf("%s%03d", sampleJobPrefix, 0)).WithNamespace(ns.Name))
 
 	test.T().Logf("Waiting for jobs to complete")
 
-	test.Eventually(Jobs(test, ns)).WithPolling(15 * time.Second).WithTimeout(JobsCompletionTimeout).
+	test.Eventually(Jobs(test, ns, LabelSelector("app.kubernetes.io/part-of!=sample-jobs"))).
+		WithPolling(15 * time.Second).
+		WithTimeout(JobsCompletionTimeout).
 		Should(And(
 			HaveLen(JobsCount),
 			HaveEach(Or(
