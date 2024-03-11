@@ -11,6 +11,9 @@ apiVersion: kind.x-k8s.io/v1alpha4
 kubeadmConfigPatches:
 - |-
   kind: ClusterConfiguration
+  apiServer:
+    extraArgs:
+      delete-collection-workers: "10"
   controllerManager:
     extraArgs:
       bind-address: 0.0.0.0
