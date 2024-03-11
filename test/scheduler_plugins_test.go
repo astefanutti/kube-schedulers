@@ -50,7 +50,7 @@ func TestCoscheduling(t *testing.T) {
 	var count atomic.Int32
 	for i := 0; i < JobsCreationRoutines; i++ {
 		group.Go(func() error {
-			for j := count.Add(1); j < JobsCount && ctx.Err() == nil; j = count.Add(1) {
+			for j := count.Add(1); j <= JobsCount && ctx.Err() == nil; j = count.Add(1) {
 				name := fmt.Sprintf("job-%03d", j)
 
 				groupResourceCPU := PodResourceCPU.DeepCopy()

@@ -96,7 +96,7 @@ func TestKueue(t *testing.T) {
 	var count atomic.Int32
 	for i := 0; i < JobsCreationRoutines; i++ {
 		group.Go(func() error {
-			for j := count.Add(1); j < JobsCount && ctx.Err() == nil; j = count.Add(1) {
+			for j := count.Add(1); j <= JobsCount && ctx.Err() == nil; j = count.Add(1) {
 				job := testJob(ns.Name, fmt.Sprintf("job-%03d", j))
 				job.Labels = map[string]string{
 					"kueue.x-k8s.io/queue-name": localQueue.Name,
