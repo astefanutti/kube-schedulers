@@ -16,9 +16,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
-	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
 )
 
 func TestKubeScheduler(t *testing.T) {
@@ -50,46 +47,9 @@ func TestKubeScheduler(t *testing.T) {
 	for i := 0; i < JobsCreationRoutines; i++ {
 		group.Go(func() error {
 			for j := count.Add(1); j < JobsCount && ctx.Err() == nil; j = count.Add(1) {
-				name := fmt.Sprintf("job-%03d", j)
-				batchAC := batchv1ac.Job(name, ns.Name).
-					WithSpec(batchv1ac.JobSpec().
-						WithCompletions(PodsByJobCount).
-						WithParallelism(PodsByJobCount).
-						WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
-						WithBackoffLimit(0).
-						WithTemplate(corev1ac.PodTemplateSpec().
-							WithAnnotations(map[string]string{
-								"duration": wait.Jitter(2*time.Minute, 0.5).String(),
-							}).
-							WithSpec(corev1ac.PodSpec().
-								WithRestartPolicy(corev1.RestartPolicyNever).
-								WithAffinity(corev1ac.Affinity().
-									WithNodeAffinity(corev1ac.NodeAffinity().
-										WithRequiredDuringSchedulingIgnoredDuringExecution(corev1ac.NodeSelector().
-											WithNodeSelectorTerms(corev1ac.NodeSelectorTerm().
-												WithMatchExpressions(corev1ac.NodeSelectorRequirement().
-													WithKey("type").
-													WithOperator(corev1.NodeSelectorOpIn).
-													WithValues("kwok")))))).
-								WithTolerations(corev1ac.Toleration().
-									WithKey(KwokNode).
-									WithEffect(corev1.TaintEffectNoSchedule).
-									WithOperator(corev1.TolerationOpEqual).
-									WithValue(string(FakeNode))).
-								WithContainers(corev1ac.Container().
-									WithName("fake").
-									WithImage("fake").
-									WithResources(corev1ac.ResourceRequirements().
-										WithRequests(corev1.ResourceList{
-											corev1.ResourceCPU:    PodResourceCPU,
-											corev1.ResourceMemory: PodResourceMemory,
-										}).
-										WithLimits(corev1.ResourceList{
-											corev1.ResourceCPU:    PodResourceCPU,
-											corev1.ResourceMemory: PodResourceMemory,
-										}))))))
+				job := testJob(ns.Name, fmt.Sprintf("job-%03d", j))
 
-				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Apply(ctx, batchAC, ApplyOptions)
+				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Create(ctx, job, metav1.CreateOptions{})
 				if err != nil {
 					return err
 				}

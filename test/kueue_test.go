@@ -16,10 +16,6 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/wait"
-	batchv1ac "k8s.io/client-go/applyconfigurations/batch/v1"
-	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
-
 	kueuev1beta1 "sigs.k8s.io/kueue/apis/kueue/v1beta1"
 	kueuev1beta1ac "sigs.k8s.io/kueue/client-go/applyconfiguration/kueue/v1beta1"
 )
@@ -101,36 +97,12 @@ func TestKueue(t *testing.T) {
 	for i := 0; i < JobsCreationRoutines; i++ {
 		group.Go(func() error {
 			for j := count.Add(1); j < JobsCount && ctx.Err() == nil; j = count.Add(1) {
-				name := fmt.Sprintf("job-%03d", j)
-				batchAC := batchv1ac.Job(name, ns.Name).
-					WithLabels(map[string]string{
-						"kueue.x-k8s.io/queue-name": localQueue.Name,
-					}).
-					WithSpec(batchv1ac.JobSpec().
-						WithCompletions(PodsByJobCount).
-						WithParallelism(PodsByJobCount).
-						WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
-						WithBackoffLimit(0).
-						WithTemplate(corev1ac.PodTemplateSpec().
-							WithAnnotations(map[string]string{
-								"duration": wait.Jitter(2*time.Minute, 0.5).String(),
-							}).
-							WithSpec(corev1ac.PodSpec().
-								WithRestartPolicy(corev1.RestartPolicyNever).
-								WithContainers(corev1ac.Container().
-									WithName("fake").
-									WithImage("fake").
-									WithResources(corev1ac.ResourceRequirements().
-										WithRequests(corev1.ResourceList{
-											corev1.ResourceCPU:    PodResourceCPU,
-											corev1.ResourceMemory: PodResourceMemory,
-										}).
-										WithLimits(corev1.ResourceList{
-											corev1.ResourceCPU:    PodResourceCPU,
-											corev1.ResourceMemory: PodResourceMemory,
-										}))))))
+				job := testJob(ns.Name, fmt.Sprintf("job-%03d", j))
+				job.Labels = map[string]string{
+					"kueue.x-k8s.io/queue-name": localQueue.Name,
+				}
 
-				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Apply(ctx, batchAC, ApplyOptions)
+				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Create(ctx, job, metav1.CreateOptions{})
 				if err != nil {
 					return err
 				}

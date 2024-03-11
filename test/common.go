@@ -8,9 +8,13 @@ import (
 	"github.com/go-logr/logr/testr"
 	. "github.com/onsi/gomega"
 
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
+	"k8s.io/utils/ptr"
 )
 
 const (
@@ -30,6 +34,73 @@ var (
 var LogOptions = testr.Options{
 	LogTimestamp: false,
 	Verbosity:    1,
+}
+
+func testJob(namespace, name string) *batchv1.Job {
+	return &batchv1.Job{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Spec: batchv1.JobSpec{
+			Parallelism:           ptr.To(int32(PodsByJobCount)),
+			Completions:           ptr.To(int32(PodsByJobCount)),
+			ActiveDeadlineSeconds: ptr.To(int64(JobActiveDeadlineSeconds)),
+			BackoffLimit:          ptr.To(int32(0)),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Annotations: map[string]string{
+						"duration": wait.Jitter(2*time.Minute, 0.5).String(),
+					},
+				},
+				Spec: corev1.PodSpec{
+					RestartPolicy: corev1.RestartPolicyNever,
+					Affinity: &corev1.Affinity{
+						NodeAffinity: &corev1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+								NodeSelectorTerms: []corev1.NodeSelectorTerm{
+									{
+										MatchExpressions: []corev1.NodeSelectorRequirement{
+											{
+												Key:      "type",
+												Operator: corev1.NodeSelectorOpIn,
+												Values:   []string{"kwok"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					Tolerations: []corev1.Toleration{
+						{
+							Key:      KwokNode,
+							Operator: corev1.TolerationOpEqual,
+							Value:    string(FakeNode),
+							Effect:   corev1.TaintEffectNoSchedule,
+						},
+					},
+					Containers: []corev1.Container{
+						{
+							Name:  "fake",
+							Image: "fake",
+							Resources: corev1.ResourceRequirements{
+								Requests: corev1.ResourceList{
+									corev1.ResourceCPU:    PodResourceCPU,
+									corev1.ResourceMemory: PodResourceMemory,
+								},
+								Limits: corev1.ResourceList{
+									corev1.ResourceCPU:    PodResourceCPU,
+									corev1.ResourceMemory: PodResourceMemory,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
 }
 
 func applyNodeConfiguration(test Test, nodeAC *corev1ac.NodeApplyConfiguration) *corev1.Node {
