@@ -41,10 +41,6 @@ nodes:
         nodeRegistration:
           kubeletExtraArgs:
             node-labels: "ingress-ready=true"
-containerdConfigPatches:
-- |-
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."192.168.0.1:5001"]
-    endpoint = ["http://192.168.0.1:5001"]
 EOF
 
 # Deploy the NGINX Ingress controller
