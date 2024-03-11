@@ -17,6 +17,7 @@ const (
 	NodesCount               = 100
 	JobsCount                = 500
 	PodsByJobCount           = 10
+	JobsCreationRoutines     = 10
 	JobActiveDeadlineSeconds = 600
 	JobsCompletionTimeout    = 30 * time.Minute
 )

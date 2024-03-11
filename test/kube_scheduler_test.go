@@ -2,8 +2,11 @@ package test
 
 import (
 	"fmt"
+	"sync/atomic"
 	"testing"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	. "github.com/astefanutti/kube-schedulers/pkg"
 	. "github.com/astefanutti/kube-schedulers/test/support"
@@ -40,55 +43,69 @@ func TestKubeScheduler(t *testing.T) {
 		test.Expect(mgr.Start(test.Ctx())).To(Succeed())
 	}()
 
-	_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Create(test.Ctx(), SampleJob(ns.Name, fmt.Sprintf("%s%03d", SampleJobPrefix, 0)), metav1.CreateOptions{})
-	test.Expect(err).NotTo(HaveOccurred())
-
 	test.T().Logf("Creating jobs")
 
-	for j := 0; j < JobsCount; j++ {
-		name := fmt.Sprintf("job-%03d", j)
+	group, ctx := errgroup.WithContext(test.Ctx())
+	var count atomic.Int32
+	for i := 0; i < JobsCreationRoutines; i++ {
+		group.Go(func() error {
+			for j := count.Add(1); j < JobsCount && ctx.Err() == nil; j = count.Add(1) {
+				name := fmt.Sprintf("job-%03d", j)
+				batchAC := batchv1ac.Job(name, ns.Name).
+					WithSpec(batchv1ac.JobSpec().
+						WithCompletions(PodsByJobCount).
+						WithParallelism(PodsByJobCount).
+						WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
+						WithBackoffLimit(0).
+						WithTemplate(corev1ac.PodTemplateSpec().
+							WithAnnotations(map[string]string{
+								"duration": wait.Jitter(2*time.Minute, 0.5).String(),
+							}).
+							WithSpec(corev1ac.PodSpec().
+								WithRestartPolicy(corev1.RestartPolicyNever).
+								WithAffinity(corev1ac.Affinity().
+									WithNodeAffinity(corev1ac.NodeAffinity().
+										WithRequiredDuringSchedulingIgnoredDuringExecution(corev1ac.NodeSelector().
+											WithNodeSelectorTerms(corev1ac.NodeSelectorTerm().
+												WithMatchExpressions(corev1ac.NodeSelectorRequirement().
+													WithKey("type").
+													WithOperator(corev1.NodeSelectorOpIn).
+													WithValues("kwok")))))).
+								WithTolerations(corev1ac.Toleration().
+									WithKey(KwokNode).
+									WithEffect(corev1.TaintEffectNoSchedule).
+									WithOperator(corev1.TolerationOpEqual).
+									WithValue(string(FakeNode))).
+								WithContainers(corev1ac.Container().
+									WithName("fake").
+									WithImage("fake").
+									WithResources(corev1ac.ResourceRequirements().
+										WithRequests(corev1.ResourceList{
+											corev1.ResourceCPU:    PodResourceCPU,
+											corev1.ResourceMemory: PodResourceMemory,
+										}).
+										WithLimits(corev1.ResourceList{
+											corev1.ResourceCPU:    PodResourceCPU,
+											corev1.ResourceMemory: PodResourceMemory,
+										}))))))
 
-		batchAC := batchv1ac.Job(name, ns.Name).
-			WithSpec(batchv1ac.JobSpec().
-				WithCompletions(PodsByJobCount).
-				WithParallelism(PodsByJobCount).
-				WithActiveDeadlineSeconds(JobActiveDeadlineSeconds).
-				WithBackoffLimit(0).
-				WithTemplate(corev1ac.PodTemplateSpec().
-					WithAnnotations(map[string]string{
-						"duration": wait.Jitter(2*time.Minute, 0.5).String(),
-					}).
-					WithSpec(corev1ac.PodSpec().
-						WithRestartPolicy(corev1.RestartPolicyNever).
-						WithAffinity(corev1ac.Affinity().
-							WithNodeAffinity(corev1ac.NodeAffinity().
-								WithRequiredDuringSchedulingIgnoredDuringExecution(corev1ac.NodeSelector().
-									WithNodeSelectorTerms(corev1ac.NodeSelectorTerm().
-										WithMatchExpressions(corev1ac.NodeSelectorRequirement().
-											WithKey("type").
-											WithOperator(corev1.NodeSelectorOpIn).
-											WithValues("kwok")))))).
-						WithTolerations(corev1ac.Toleration().
-							WithKey(KwokNode).
-							WithEffect(corev1.TaintEffectNoSchedule).
-							WithOperator(corev1.TolerationOpEqual).
-							WithValue(string(FakeNode))).
-						WithContainers(corev1ac.Container().
-							WithName("fake").
-							WithImage("fake").
-							WithResources(corev1ac.ResourceRequirements().
-								WithRequests(corev1.ResourceList{
-									corev1.ResourceCPU:    PodResourceCPU,
-									corev1.ResourceMemory: PodResourceMemory,
-								}).
-								WithLimits(corev1.ResourceList{
-									corev1.ResourceCPU:    PodResourceCPU,
-									corev1.ResourceMemory: PodResourceMemory,
-								}))))))
+				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Apply(ctx, batchAC, ApplyOptions)
+				if err != nil {
+					return err
+				}
 
-		_, err := test.Client().Core().BatchV1().Jobs(ns.Name).Apply(test.Ctx(), batchAC, ApplyOptions)
-		test.Expect(err).NotTo(HaveOccurred())
+				if j%10 == 0 {
+					_, err = test.Client().Core().BatchV1().Jobs(ns.Name).
+						Create(ctx, SampleJob(ns.Name, fmt.Sprintf("%s%03d", SampleJobPrefix, j/10)), metav1.CreateOptions{})
+					if err != nil {
+						return err
+					}
+				}
+			}
+			return nil
+		})
 	}
+	test.Expect(group.Wait()).To(Succeed())
 
 	test.T().Logf("Waiting for jobs to complete")
 
