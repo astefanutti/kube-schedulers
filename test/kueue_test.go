@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/astefanutti/kube-schedulers/pkg"
 	. "github.com/astefanutti/kube-schedulers/test/support"
+	"github.com/go-logr/logr/testr"
 	. "github.com/onsi/gomega"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -21,6 +23,8 @@ import (
 
 func TestKueue(t *testing.T) {
 	test := With(t)
+
+	test.T().Logf("Configuring nodes")
 
 	applyNodeConfiguration(test, sampleNodeConfiguration())
 
@@ -39,9 +43,9 @@ func TestKueue(t *testing.T) {
 		WithSpec(kueuev1beta1ac.ResourceFlavorSpec().
 			WithNodeLabels(map[string]string{"type": "kwok"}).
 			WithTolerations(corev1.Toleration{
-				Key:      kwokNode,
+				Key:      KwokNode,
 				Operator: corev1.TolerationOpEqual,
-				Value:    string(fake),
+				Value:    string(FakeNode),
 				Effect:   corev1.TaintEffectNoSchedule,
 			}))
 
@@ -76,9 +80,14 @@ func TestKueue(t *testing.T) {
 	localQueue, err := test.Client().Kueue().KueueV1beta1().LocalQueues(ns.Name).Apply(test.Ctx(), localQueueAC, ApplyOptions)
 	test.Expect(err).NotTo(HaveOccurred())
 
-	watchJobs(test, ns, annotatePodsWithJobReadiness, injectJobSamples)
+	test.T().Logf("Starting manager")
 
-	applyJobConfiguration(test, sampleJobConfiguration(fmt.Sprintf("%s%03d", sampleJobPrefix, 0)).WithNamespace(ns.Name))
+	mgr, err := NewManager(test.Client().GetConfig(), testr.NewWithOptions(test.T(), LogOptions), ns.Name)
+	test.Expect(err).NotTo(HaveOccurred())
+
+	go func() {
+		test.Expect(mgr.Start(test.Ctx())).To(Succeed())
+	}()
 
 	test.T().Logf("Creating jobs")
 

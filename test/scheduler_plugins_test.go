@@ -5,7 +5,9 @@ import (
 	"testing"
 	"time"
 
+	. "github.com/astefanutti/kube-schedulers/pkg"
 	. "github.com/astefanutti/kube-schedulers/test/support"
+	"github.com/go-logr/logr/testr"
 	. "github.com/onsi/gomega"
 
 	batchv1 "k8s.io/api/batch/v1"
@@ -23,6 +25,8 @@ const schedulerName = "scheduler-plugins-scheduler"
 func TestCoscheduling(t *testing.T) {
 	test := With(t)
 
+	test.T().Logf("Configuring nodes")
+
 	applyNodeConfiguration(test, sampleNodeConfiguration())
 
 	for i := 0; i < NodesCount; i++ {
@@ -31,9 +35,14 @@ func TestCoscheduling(t *testing.T) {
 
 	ns := test.NewTestNamespace()
 
-	watchJobs(test, ns, annotatePodsWithJobReadiness, injectJobSamples)
+	test.T().Logf("Starting manager")
 
-	applyJobConfiguration(test, sampleJobConfiguration(fmt.Sprintf("%s%03d", sampleJobPrefix, 0)).WithNamespace(ns.Name))
+	mgr, err := NewManager(test.Client().GetConfig(), testr.NewWithOptions(test.T(), LogOptions), ns.Name)
+	test.Expect(err).NotTo(HaveOccurred())
+
+	go func() {
+		test.Expect(mgr.Start(test.Ctx())).To(Succeed())
+	}()
 
 	test.T().Logf("Creating jobs")
 
@@ -95,10 +104,10 @@ func TestCoscheduling(t *testing.T) {
 											WithOperator(corev1.NodeSelectorOpIn).
 											WithValues("kwok")))))).
 						WithTolerations(corev1ac.Toleration().
-							WithKey(kwokNode).
+							WithKey(KwokNode).
 							WithEffect(corev1.TaintEffectNoSchedule).
 							WithOperator(corev1.TolerationOpEqual).
-							WithValue(string(fake))).
+							WithValue(string(FakeNode))).
 						WithContainers(corev1ac.Container().
 							WithName("fake").
 							WithImage("fake").

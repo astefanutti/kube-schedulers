@@ -17,15 +17,21 @@ type Client interface {
 	Core() kubernetes.Interface
 	Dynamic() dynamic.Interface
 	Kueue() kueue.Interface
+	GetConfig() *rest.Config
 }
 
 type testClient struct {
+	config  *rest.Config
 	core    kubernetes.Interface
 	dynamic dynamic.Interface
 	kueue   kueue.Interface
 }
 
 var _ Client = (*testClient)(nil)
+
+func (t *testClient) GetConfig() *rest.Config {
+	return rest.CopyConfig(t.config)
+}
 
 func (t *testClient) Core() kubernetes.Interface {
 	return t.core
@@ -67,6 +73,7 @@ func newTestClient(cfg *rest.Config) (Client, error) {
 	}
 
 	return &testClient{
+		config:  cfg,
 		core:    kubeClient,
 		dynamic: dynamicClient,
 		kueue:   kueueClient,

@@ -38,6 +38,10 @@ func WithConfig(t *testing.T, cfg *rest.Config) Test {
 		withDeadline, cancel := context.WithDeadline(ctx, deadline)
 		t.Cleanup(cancel)
 		ctx = withDeadline
+	} else {
+		withCancel, cancel := context.WithCancel(ctx)
+		t.Cleanup(cancel)
+		ctx = withCancel
 	}
 
 	return &T{
