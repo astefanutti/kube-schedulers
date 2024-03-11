@@ -66,11 +66,13 @@ func annotatePodsWithJobReadiness(test Test, ns *corev1.Namespace) {
 	test.Expect(err).NotTo(HaveOccurred())
 
 	go func() {
+		ctx, cancel := context.WithCancel(test.Ctx())
+		test.T().Cleanup(cancel)
 		defer jobsWatcher.Stop()
 		for {
 			select {
-			case <-test.Ctx().Done():
-				test.T().Errorf("error: %v", test.Ctx().Err())
+			case <-ctx.Done():
+				break
 			case e := <-jobsWatcher.ResultChan():
 				switch e.Type {
 				case watch.Error:
