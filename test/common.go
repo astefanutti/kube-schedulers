@@ -69,6 +69,12 @@ func watchJobs(test Test, ns *corev1.Namespace, handlers ...func(Test, *batchv1.
 	jobs, err := test.Client().Core().BatchV1().Jobs(ns.Name).List(test.Ctx(), metav1.ListOptions{})
 	test.Expect(err).NotTo(HaveOccurred())
 
+	for _, job := range jobs.Items {
+		for _, handler := range handlers {
+			handler(test, &job)
+		}
+	}
+
 	jobsWatcher, err := retrywatch.NewRetryWatcher(jobs.ResourceVersion, newWatcher(test.Ctx(),
 		test.Client().Core().BatchV1().Jobs(ns.Name)))
 	test.Expect(err).NotTo(HaveOccurred())
@@ -80,11 +86,13 @@ func watchJobs(test Test, ns *corev1.Namespace, handlers ...func(Test, *batchv1.
 		for {
 			select {
 			case <-ctx.Done():
-				break
+				return
 			case e := <-jobsWatcher.ResultChan():
 				switch e.Type {
 				case watch.Error:
-					test.T().Errorf("error watching for Jobs: %v", apierrors.FromObject(e.Object))
+					test.T().Logf("Retry watching for Jobs: %v", apierrors.FromObject(e.Object))
+					watchJobs(test, ns, handlers...)
+					return
 				case watch.Added, watch.Modified:
 					job, ok := e.Object.(*batchv1.Job)
 					if !ok {
@@ -107,15 +115,20 @@ func annotatePodsWithJobReadiness(test Test, job *batchv1.Job) {
 		pods, err := test.Client().Core().CoreV1().Pods(job.Namespace).List(test.Ctx(), metav1.ListOptions{
 			LabelSelector: batchv1.JobNameLabel + "=" + job.Name,
 		})
-		test.Expect(err).NotTo(HaveOccurred())
+		if err != nil {
+			test.T().Errorf("error listing Pods: %v", err)
+			return
+		}
 
 		for _, pod := range pods.Items {
 			podAC := corev1ac.Pod(pod.Name, pod.Namespace).
 				WithAnnotations(map[string]string{
 					"job-ready": "true",
 				})
-			_, err := test.Client().Core().CoreV1().Pods(pod.Namespace).ApplyStatus(test.Ctx(), podAC, ApplyOptions)
-			test.Expect(err).NotTo(HaveOccurred())
+			_, err = test.Client().Core().CoreV1().Pods(pod.Namespace).ApplyStatus(test.Ctx(), podAC, ApplyOptions)
+			if err != nil {
+				test.T().Errorf("error applying Pod status: %v", err)
+			}
 		}
 	}
 }
