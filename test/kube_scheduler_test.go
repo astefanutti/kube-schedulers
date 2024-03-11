@@ -28,6 +28,8 @@ func TestKubeScheduler(t *testing.T) {
 
 	watchJobs(test, ns, annotatePodsWithJobReadiness, injectJobSamples)
 
+	applyJobConfiguration(test, sampleJobConfiguration(fmt.Sprintf("%s%03d", sampleJobPrefix, 0)).WithNamespace(ns.Name))
+
 	test.T().Logf("Creating jobs")
 
 	for j := 0; j < JobsCount; j++ {
@@ -74,8 +76,6 @@ func TestKubeScheduler(t *testing.T) {
 		_, err := test.Client().Core().BatchV1().Jobs(ns.Name).Apply(test.Ctx(), batchAC, ApplyOptions)
 		test.Expect(err).NotTo(HaveOccurred())
 	}
-
-	applyJobConfiguration(test, sampleJobConfiguration(fmt.Sprintf("%s%03d", sampleJobPrefix, 0)).WithNamespace(ns.Name))
 
 	test.T().Logf("Waiting for jobs to complete")
 
