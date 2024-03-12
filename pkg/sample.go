@@ -30,7 +30,7 @@ func SampleJob(namespace, name string) *batchv1.Job {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"duration": (5 * time.Second).String(),
+						"duration": (10 * time.Second).String(),
 					},
 				},
 				Spec: corev1.PodSpec{
