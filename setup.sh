@@ -19,6 +19,8 @@ kubeadmConfigPatches:
       bind-address: 0.0.0.0
       concurrent-job-syncs: "100"
       concurrent-gc-syncs: "50"
+      kube-api-qps: "30"
+      kube-api-burst: "50"
   etcd:
     local:
       extraArgs:
