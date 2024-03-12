@@ -57,6 +57,9 @@ func newTestClient(cfg *rest.Config) (Client, error) {
 		}
 	}
 
+	cfg.QPS = 20
+	cfg.Burst = 200
+
 	kubeClient, err := kubernetes.NewForConfig(cfg)
 	if err != nil {
 		return nil, err
