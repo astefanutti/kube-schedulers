@@ -19,16 +19,16 @@ import (
 
 const (
 	NodesCount               = 100
-	JobsCount                = 500
+	JobsCount                = 1000
 	PodsByJobCount           = 10
-	JobsCreationRoutines     = 10
-	JobActiveDeadlineSeconds = 600
-	JobsCompletionTimeout    = 30 * time.Minute
+	JobsCreationRoutines     = 5
+	JobActiveDeadlineSeconds = 15 * 60
+	JobsCompletionTimeout    = 60 * time.Minute
 )
 
 var (
-	PodResourceCPU    = resource.MustParse("1")
-	PodResourceMemory = resource.MustParse("1Gi")
+	PodResourceCPU    = resource.MustParse("2")
+	PodResourceMemory = resource.MustParse("2Gi")
 )
 
 var LogOptions = testr.Options{
@@ -51,7 +51,7 @@ func testJob(namespace, name string) *batchv1.Job {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Annotations: map[string]string{
-						"duration": wait.Jitter(2*time.Minute, 0.5).String(),
+						"duration": wait.Jitter(3*time.Minute, 0.5).String(),
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -174,14 +174,14 @@ func workerNodeConfiguration(name string) *corev1ac.NodeApplyConfiguration {
 				WithValue(string(FakeNode)))).
 		WithStatus(corev1ac.NodeStatus().
 			WithAllocatable(corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("10"),
-				corev1.ResourceMemory: resource.MustParse("10Gi"),
-				corev1.ResourcePods:   resource.MustParse("100"),
+				corev1.ResourceCPU:    resource.MustParse("100"),
+				corev1.ResourceMemory: resource.MustParse("100Gi"),
+				corev1.ResourcePods:   resource.MustParse("1000"),
 			}).
 			WithCapacity(corev1.ResourceList{
-				corev1.ResourceCPU:    resource.MustParse("10"),
-				corev1.ResourceMemory: resource.MustParse("10Gi"),
-				corev1.ResourcePods:   resource.MustParse("100"),
+				corev1.ResourceCPU:    resource.MustParse("100"),
+				corev1.ResourceMemory: resource.MustParse("100Gi"),
+				corev1.ResourcePods:   resource.MustParse("1000"),
 			}).
 			WithNodeInfo(corev1ac.NodeSystemInfo().
 				WithKubeProxyVersion("fake").
