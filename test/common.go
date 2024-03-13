@@ -1,6 +1,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -14,11 +15,14 @@ import (
 	schedulingv1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/wait"
 	corev1ac "k8s.io/client-go/applyconfigurations/core/v1"
 	schedulingv1ac "k8s.io/client-go/applyconfigurations/scheduling/v1"
 	"k8s.io/utils/ptr"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 const (
@@ -33,6 +37,7 @@ const (
 const (
 	kwokNode              = "kwok.x-k8s.io/node"
 	highPriorityClassName = "high-priority"
+	sampleJobsLabel       = "sample-jobs"
 )
 
 type NodeType string
@@ -127,7 +132,7 @@ func sampleJob(namespace, name string, duration time.Duration) *batchv1.Job {
 			Name:         name + "-" + rand.String(5),
 			GenerateName: name,
 			Labels: map[string]string{
-				"app.kubernetes.io/part-of": "sample-jobs",
+				"app.kubernetes.io/part-of": sampleJobsLabel,
 			},
 		},
 		Spec: batchv1.JobSpec{
@@ -179,6 +184,12 @@ func sampleJob(namespace, name string, duration time.Duration) *batchv1.Job {
 	}
 }
 
+func excludeSampleJobs(test Test) labels.Selector {
+	selector, err := labels.Parse("app.kubernetes.io/part-of!=" + sampleJobsLabel)
+	test.Expect(err).NotTo(HaveOccurred())
+	return selector
+}
+
 func createJob(test Test, job *batchv1.Job) *batchv1.Job {
 	test.T().Helper()
 
@@ -200,6 +211,16 @@ func maybeCreateSampleJob(test Test, ns *corev1.Namespace, index int32) {
 			sample.Spec.Template.Spec.PriorityClassName = highPriorityClassName
 		}
 		createJob(test, sample)
+	}
+}
+
+func jobs(ctx context.Context, mgr ctrl.Manager, ns *corev1.Namespace, selector labels.Selector) func(g Gomega) []batchv1.Job {
+	return func(g Gomega) []batchv1.Job {
+		list := batchv1.JobList{}
+		err := mgr.GetClient().List(ctx, &list, client.InNamespace(ns.Name),
+			client.MatchingLabelsSelector{Selector: selector})
+		g.Expect(err).NotTo(HaveOccurred())
+		return list.Items
 	}
 }
 

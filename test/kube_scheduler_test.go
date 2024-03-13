@@ -62,7 +62,7 @@ func TestKubeScheduler(t *testing.T) {
 
 	test.T().Logf("Waiting for jobs to complete")
 
-	test.Eventually(Jobs(test, ns, LabelSelector("app.kubernetes.io/part-of!=sample-jobs"))).
+	test.Eventually(jobs(ctx, mgr, ns, excludeSampleJobs(test))).
 		WithPolling(15 * time.Second).
 		WithTimeout(JobsCompletionTimeout).
 		Should(And(
