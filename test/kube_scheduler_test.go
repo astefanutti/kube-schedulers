@@ -15,7 +15,6 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestKubeScheduler(t *testing.T) {
@@ -29,7 +28,13 @@ func TestKubeScheduler(t *testing.T) {
 		applyNodeConfiguration(test, workerNodeConfiguration(fmt.Sprintf("kwok-node-%03d", i)))
 	}
 
+	test.T().Logf("Configuring priority classes")
+
+	applyPriorityClassConfiguration(test, highPriorityClassConfiguration())
+
 	ns := test.NewTestNamespace()
+
+	test.T().Logf("Created test namespace %s", ns.Namespace)
 
 	test.T().Logf("Starting manager")
 
@@ -47,20 +52,8 @@ func TestKubeScheduler(t *testing.T) {
 	for i := 0; i < JobsCreationRoutines; i++ {
 		group.Go(func() error {
 			for j := count.Add(1); j <= JobsCount && ctx.Err() == nil; j = count.Add(1) {
-				job := testJob(ns.Name, fmt.Sprintf("job-%03d", j))
-
-				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Create(ctx, job, metav1.CreateOptions{})
-				if err != nil {
-					return err
-				}
-
-				if j%10 == 0 {
-					_, err = test.Client().Core().BatchV1().Jobs(ns.Name).
-						Create(ctx, SampleJob(ns.Name, fmt.Sprintf("%s%03d", SampleJobPrefix, j/10)), metav1.CreateOptions{})
-					if err != nil {
-						return err
-					}
-				}
+				createJob(test, testJob(ns.Name, fmt.Sprintf("job-%03d", j)))
+				maybeCreateSampleJob(test, ns, j)
 			}
 			return nil
 		})

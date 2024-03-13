@@ -38,13 +38,17 @@ func TestKueue(t *testing.T) {
 		}
 	}
 
+	test.T().Logf("Configuring priority classes")
+
+	applyPriorityClassConfiguration(test, highPriorityClassConfiguration())
+
 	test.T().Logf("Configuring Kueue")
 
 	flavorAC := kueuev1beta1ac.ResourceFlavor("kwok").
 		WithSpec(kueuev1beta1ac.ResourceFlavorSpec().
 			WithNodeLabels(map[string]string{"type": "kwok"}).
 			WithTolerations(corev1.Toleration{
-				Key:      KwokNode,
+				Key:      kwokNode,
 				Operator: corev1.TolerationOpEqual,
 				Value:    string(FakeNode),
 				Effect:   corev1.TaintEffectNoSchedule,
@@ -74,6 +78,8 @@ func TestKueue(t *testing.T) {
 
 	ns := test.NewTestNamespace()
 
+	test.T().Logf("Created test namespace %s", ns.Namespace)
+
 	localQueueAC := kueuev1beta1ac.LocalQueue("queue", ns.Name).
 		WithSpec(kueuev1beta1ac.LocalQueueSpec().
 			WithClusterQueue(kueuev1beta1.ClusterQueueReference(clusterQueue.Name)))
@@ -101,19 +107,8 @@ func TestKueue(t *testing.T) {
 				job.Labels = map[string]string{
 					"kueue.x-k8s.io/queue-name": localQueue.Name,
 				}
-
-				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Create(ctx, job, metav1.CreateOptions{})
-				if err != nil {
-					return err
-				}
-
-				if j%10 == 0 {
-					_, err = test.Client().Core().BatchV1().Jobs(ns.Name).
-						Create(ctx, SampleJob(ns.Name, fmt.Sprintf("%s%03d", SampleJobPrefix, j/10)), metav1.CreateOptions{})
-					if err != nil {
-						return err
-					}
-				}
+				createJob(test, job)
+				maybeCreateSampleJob(test, ns, j)
 			}
 			return nil
 		})

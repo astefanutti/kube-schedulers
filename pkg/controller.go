@@ -9,6 +9,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/klog/v2"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,9 +41,13 @@ func (r *jobReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.R
 		if job.Status.CompletionTime != nil && !job.Status.CompletionTime.IsZero() {
 			log.V(1).Info("Sample job completed")
 
-			sample := SampleJob(job.Namespace, job.GenerateName)
-			err := r.client.Create(ctx, sample)
-			return ctrl.Result{}, err
+			// Re-inject the sample job probe
+			sample := job.DeepCopy()
+			sample.Name = job.GenerateName + "-" + rand.String(5)
+			sample.ResourceVersion = ""
+			sample.Spec.Selector = nil
+			sample.Spec.Template.Labels = nil
+			return ctrl.Result{}, r.client.Create(ctx, sample)
 		}
 	}
 

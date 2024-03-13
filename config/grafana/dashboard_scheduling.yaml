@@ -1186,7 +1186,26 @@ data:
               "unit": "s",
               "unitScale": true
             },
-            "overrides": []
+            "overrides": [
+              {
+                "matcher": {
+                  "id": "byName",
+                  "options": "Default priority"
+                },
+                "properties": [
+                  {
+                    "id": "custom.lineStyle",
+                    "value": {
+                      "dash": [
+                        10,
+                        10
+                      ],
+                      "fill": "dash"
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -1211,12 +1230,21 @@ data:
           "targets": [
             {
               "datasource": "$datasource",
-              "expr": "avg(kube_pod_status_scheduled_time{pod=~\"sample-.*\"} - on(uid,pod) kube_pod_created{pod=~\"sample-.*\"})",
+              "expr": "avg(kube_pod_status_scheduled_time{pod=~\"sample-default.*\"} - on(uid,pod) kube_pod_created{pod=~\"sample-default.*\"})",
               "format": "time_series",
               "instant": false,
-              "legendFormat": "Average scheduling time",
+              "legendFormat": "Default priority",
               "range": true,
               "refId": "A"
+            },
+            {
+              "datasource": "$datasource",
+              "expr": "avg(kube_pod_status_scheduled_time{pod=~\"sample-high.*\"} - on(uid,pod) kube_pod_created{pod=~\"sample-high.*\"})",
+              "hide": false,
+              "instant": false,
+              "legendFormat": "High priority",
+              "range": true,
+              "refId": "B"
             }
           ],
           "title": "Average Sample Pods Scheduling Time",

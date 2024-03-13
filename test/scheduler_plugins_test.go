@@ -15,7 +15,6 @@ import (
 
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	schedulingv1alpha1 "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 )
@@ -33,7 +32,13 @@ func TestCoscheduling(t *testing.T) {
 		applyNodeConfiguration(test, workerNodeConfiguration(fmt.Sprintf("kwok-node-%03d", i)))
 	}
 
+	test.T().Logf("Configuring priority classes")
+
+	applyPriorityClassConfiguration(test, highPriorityClassConfiguration())
+
 	ns := test.NewTestNamespace()
+
+	test.T().Logf("Created test namespace %s", ns.Namespace)
 
 	test.T().Logf("Starting manager")
 
@@ -91,19 +96,9 @@ func TestCoscheduling(t *testing.T) {
 				}
 				job.Spec.Template.Spec.SchedulerName = schedulerName
 				job.Spec.ActiveDeadlineSeconds = nil
+				createJob(test, job)
 
-				_, err = test.Client().Core().BatchV1().Jobs(ns.Name).Create(ctx, job, metav1.CreateOptions{})
-				if err != nil {
-					return err
-				}
-
-				if j%10 == 0 {
-					_, err = test.Client().Core().BatchV1().Jobs(ns.Name).
-						Create(ctx, SampleJob(ns.Name, fmt.Sprintf("%s%03d", SampleJobPrefix, j/10)), metav1.CreateOptions{})
-					if err != nil {
-						return err
-					}
-				}
+				maybeCreateSampleJob(test, ns, j)
 			}
 			return nil
 		})
