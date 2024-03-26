@@ -2,7 +2,10 @@
 
 set -euo pipefail
 
-: "${INGRESS_NGINX_VERSION:=controller-v1.9.6}"
+SOURCE_DIR="$(cd "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+ROOT_DIR="$SOURCE_DIR/.."
+KIND="$ROOT_DIR"/bin/kind
+INGRESS_NGINX_VERSION=controller-v1.9.6
 
 echo "Creating KinD cluster"
 cat <<EOF | kind create cluster --name kwok --config=-
