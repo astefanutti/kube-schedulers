@@ -25,5 +25,5 @@ test-kube-scheduler:
 test-kueue:
 	$(GO_CMD) test $(GO_TEST_FLAGS) -run TestKueue ./test
 
-test-cosheduling:
+test-coscheduling:
 	$(GO_CMD) test $(GO_TEST_FLAGS) -run TestCoscheduling ./test

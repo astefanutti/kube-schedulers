@@ -40,7 +40,7 @@ $ make test-kube-scheduler
 ### Coscheduling Plugin
 
 ```console
-$ make test-cosheduling
+$ make test-coscheduling
 ```
 
 ### Kueue
